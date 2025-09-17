@@ -1,0 +1,13 @@
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+bcrypt==4.3.0
+fastapi[standard-no-fastapi-cloud-cli]==0.116.2
+passlib==1.7.4
+psycopg[binary,pool]==3.2.10
+pyjwt==2.10.1
+python-dotenv==1.1.1
+python-multipart==0.0.20
+slowapi==0.1.9
+SQLAlchemy==2.0.43

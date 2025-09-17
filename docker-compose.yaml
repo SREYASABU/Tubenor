@@ -1,0 +1,38 @@
+services:
+  tubentor-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tubentor-backend
+    hostname: tubentor-backend
+    env_file: "./backend/.env"
+    ports:
+      - "8000:8000"
+    depends_on:
+      tubentor-db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  tubentor-db:
+    image: postgres:17
+    container_name: tubentor-db
+    env_file: "./backend/.env"
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+volumes:
+  postgres_data:
