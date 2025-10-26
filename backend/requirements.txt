@@ -11,3 +11,5 @@ python-dotenv==1.1.1
 python-multipart==0.0.20
 slowapi==0.1.9
 SQLAlchemy==2.0.43
+google-adk==1.9.0
+litellm==1.75.0

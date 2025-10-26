@@ -17,22 +17,32 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - tubentor-network
     restart: unless-stopped
 
   tubentor-db:
     image: postgres:17
     container_name: tubentor-db
-    env_file: "./backend/.env"
+    hostname: tubentor-db
+    env_file: "backend/.env"
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # - ./deployment/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - tubentor-network
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+
     restart: unless-stopped
 volumes:
   postgres_data:
+
+networks:
+  tubentor-network:
+    driver: bridge
