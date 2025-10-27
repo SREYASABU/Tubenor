@@ -39,13 +39,13 @@ def _get_youtube_clients():
 
 def execute_dynamic_youtube_query(
     query_type: str,
-    metrics: Optional[str],
-    dimensions: Optional[str],
-    filters: Optional[str],
-    sort: Optional[str],
-    start_date: Optional[str],
-    end_date: Optional[str],
-    max_results: Optional[int],
+    metrics: Optional[str] = None,
+    dimensions: Optional[str] = None,
+    filters: Optional[str] = None,
+    sort: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    max_results: Optional[int] = None,
     **additional_params
 ) -> Dict[str, Any]:
     """
@@ -105,7 +105,7 @@ def execute_dynamic_youtube_query(
     try:
         youtube_data, youtube_analytics = _get_youtube_clients()
         
-        # Handle default values (Google AI doesn't support defaults in function signatures)
+        # Set default for max_results if not provided
         if max_results is None:
             max_results = 100
         

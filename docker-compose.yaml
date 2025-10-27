@@ -1,15 +1,29 @@
 services:
-  tubentor-backend:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tubenor-frontend
+    hostname: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - tubenor-network
+    restart: unless-stopped
+
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: tubentor-backend
-    hostname: tubentor-backend
+    container_name: tubenor-backend
+    hostname: backend
     env_file: "./backend/.env"
     ports:
       - "8000:8000"
     depends_on:
-      tubentor-db:
+      tubenor-db:
         condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
@@ -18,13 +32,13 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - tubentor-network
+      - tubenor-network
     restart: unless-stopped
 
-  tubentor-db:
+  tubenor-db:
     image: postgres:17
-    container_name: tubentor-db
-    hostname: tubentor-db
+    container_name: tubenor-db
+    hostname: tubenor-db
     env_file: "backend/.env"
     ports:
       - "5432:5432"
@@ -32,7 +46,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # - ./deployment/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - tubentor-network
+      - tubenor-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -44,5 +58,5 @@ volumes:
   postgres_data:
 
 networks:
-  tubentor-network:
+  tubenor-network:
     driver: bridge

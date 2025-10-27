@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes import register_routes
 
 app = FastAPI(
-    title="Tubentor API",
+    title="Tubenor API",
     description="API for managing YouTube analytics and content",
     version="1.0.0"
 )
@@ -22,7 +22,7 @@ app.add_middleware(
 register_routes(app)
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Tubentor API"}
+    return {"message": "Welcome to Tubenor API"}
 
 @app.get("/health")
 async def health_check():
