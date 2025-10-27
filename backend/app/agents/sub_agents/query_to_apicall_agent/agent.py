@@ -5,7 +5,7 @@ from . import prompt, tools
 
 AGENT_MODEL = "gemini/gemini-2.0-flash"
 
-# Create the agent instance
+# Create the agent instance with output_key for sequential chaining
 api_executor_agent = Agent(
     name="api_executor_agent",
     model=LiteLlm(AGENT_MODEL),
@@ -15,5 +15,6 @@ api_executor_agent = Agent(
         tools.execute_dynamic_youtube_query,  # Primary tool - handles ANY YouTube query dynamically
         tools.execute_youtube_api_call,        # Legacy tool - kept for backwards compatibility
     ],
+    output_key="api_response",  # Store output in state for next agent to access
 )
 

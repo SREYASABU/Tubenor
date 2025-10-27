@@ -2,12 +2,12 @@
 
 ## Overview
 
-This system uses a **two-stage agent workflow** to handle YouTube data queries:
+This system uses a **SequentialAgent workflow** to handle YouTube data queries:
 
 1. **API Executor Agent** - Converts natural language to API calls and executes them
 2. **Response Generator Agent** - Transforms raw API responses into natural language
 
-The **Coordinator Agent** orchestrates both sub-agents to provide a seamless user experience.
+The agents are connected using ADK's `SequentialAgent`, which executes them in a deterministic order and automatically passes data between agents via shared session state.
 
 ---
 
@@ -16,63 +16,84 @@ The **Coordinator Agent** orchestrates both sub-agents to provide a seamless use
 ```
 User Query
     ↓
-┌─────────────────────────┐
-│  Coordinator Agent      │  ← Orchestrates the workflow
-│  (youtube_assistant)    │
-└─────────────────────────┘
-    ↓                  ↓
-    ↓                  ↓
-┌─────────────────────────┐    ┌─────────────────────────┐
-│  API Executor Agent     │ →  │ Response Generator      │
-│  (api_executor_agent)   │    │ (response_generator)    │
-└─────────────────────────┘    └─────────────────────────┘
-    ↓                                      ↓
-    ↓                                      ↓
-[YouTube API Call]              [Natural Language Response]
+┌─────────────────────────────────────────────────────┐
+│  SequentialAgent (youtube_assistant)                │
+│  ┌───────────────────────────────────────────────┐  │
+│  │  Step 1: API Executor Agent                   │  │
+│  │  - Executes YouTube API calls                 │  │
+│  │  - Stores result in state['api_response']     │  │
+│  └───────────────────────────────────────────────┘  │
+│                       ↓                              │
+│         (Data automatically passed via state)        │
+│                       ↓                              │
+│  ┌───────────────────────────────────────────────┐  │
+│  │  Step 2: Response Generator Agent             │  │
+│  │  - Reads state['api_response']                │  │
+│  │  - Generates natural language response        │  │
+│  └───────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+    ↓
+Final Natural Language Response to User
 ```
+
+**Key Benefits:**
+- ✅ **Deterministic execution** - Agents run in exact order, every time
+- ✅ **No looping** - Each agent runs exactly once per query
+- ✅ **Automatic data passing** - Output from agent 1 → input to agent 2 via state
+- ✅ **Built-in by ADK** - Uses official Google ADK `SequentialAgent` pattern
 
 ---
 
 ## Agent Responsibilities
 
-### 1. Coordinator Agent (`coordinator_agent`)
+### 1. SequentialAgent (`coordinator_agent`)
 
-**Role:** Orchestrate the entire query handling workflow
+**Type:** Workflow Agent (ADK built-in)
 
 **Location:** `Tubentor/backend/app/agents/main_agent.py`
 
-**Responsibilities:**
-- Receive user queries
-- Delegate to API Executor Agent to fetch data
-- Pass API response to Response Generator Agent
-- Return final natural language response to user
+**Configuration:**
+```python
+SequentialAgent(
+    name="youtube_assistant",
+    sub_agents=[api_executor_agent, response_generator_agent],
+    description="Executes a sequence of YouTube data fetching and response generation."
+)
+```
 
-**Example Workflow:**
-```
-User: "Find videos about Python programming"
-  ↓
-Step 1: Coordinator → API Executor: "Find videos about Python programming"
-Step 2: API Executor → YouTube API: search(query="Python programming")
-Step 3: API Executor → Coordinator: [Raw API Response]
-Step 4: Coordinator → Response Generator: [Raw API Response]
-Step 5: Response Generator → Coordinator: [Natural Language Response]
-Step 6: Coordinator → User: "I found several videos about Python programming..."
-```
+**How it works:**
+- Receives user query
+- Executes `api_executor_agent` first (stores result in `state['api_response']`)
+- Automatically executes `response_generator_agent` second (reads from `state['api_response']`)
+- Returns final response to user
+- **Not powered by LLM** - purely deterministic execution order
 
 ---
 
 ### 2. API Executor Agent (`api_executor_agent`)
 
-**Role:** Understand queries and execute YouTube API calls
+**Type:** LLM Agent
+
+**Role:** Execute YouTube API calls and store results
 
 **Location:** `Tubentor/backend/app/agents/sub_agents/query_to_apicall_agent/`
+
+**Configuration:**
+```python
+Agent(
+    name="api_executor_agent",
+    model=LiteLlm("gemini/gemini-2.0-flash"),
+    tools=[execute_dynamic_youtube_query, execute_youtube_api_call],
+    output_key="api_response"  # Stores output in state for next agent
+)
+```
 
 **Responsibilities:**
 - Parse user's natural language query
 - Identify the appropriate YouTube API endpoint
 - Extract or infer necessary parameters
-- Execute API call using `execute_youtube_api_call` tool
-- Return raw API response
+- Execute API call using `execute_dynamic_youtube_query` tool
+- **Store raw API response in `state['api_response']`** for the next agent
 
 **Available API Endpoints:**
 
@@ -117,16 +138,29 @@ Step 6: Coordinator → User: "I found several videos about Python programming..
 
 ### 3. Response Generator Agent (`response_generator_agent`)
 
+**Type:** LLM Agent
+
 **Role:** Transform raw API data into natural language responses
 
 **Location:** `Tubentor/backend/app/agents/sub_agents/response_analyzer_agent/`
 
+**Configuration:**
+```python
+Agent(
+    name="response_generator_agent",
+    model=LiteLlm("gemini/gemini-2.0-flash"),
+    instruction="""... {api_response} ...""",  # Reads from state
+    tools=[]  # No tools needed, pure LLM analysis
+)
+```
+
 **Responsibilities:**
-- Interpret raw YouTube API responses
+- **Read raw API data from `state['api_response']`** (automatically injected via `{api_response}` placeholder)
+- Interpret the YouTube API response structure
 - Extract key insights and patterns
 - Present information in clear, natural language
 - Provide actionable recommendations
-- Make complex data easy to understand
+- Return final user-facing response
 
 **Response Style:**
 - Professional but friendly
@@ -136,27 +170,33 @@ Step 6: Coordinator → User: "I found several videos about Python programming..
 - Provides context for numbers
 - Offers practical recommendations
 
-**No tools needed** - This agent uses its LLM capabilities to analyze and transform data
+**State Injection:** The instruction template contains `{api_response}` which ADK automatically replaces with the value from `state['api_response']` set by the previous agent.
 
 ---
 
-## Example Queries and Flows
+## Example Queries and Flows (SequentialAgent Pattern)
 
 ### Example 1: Search Query
 
 **User Query:** "Find videos about machine learning"
 
-**Flow:**
-1. Coordinator receives query
-2. Coordinator → API Executor: "Find videos about machine learning"
-3. API Executor analyzes query:
-   - Intent: Search for videos
-   - Endpoint: `data/search`
-   - Parameters: `{"query": "machine learning", "max_results": 10}`
-4. API Executor calls tool: `execute_youtube_api_call("data", "search", {"query": "machine learning", "max_results": 10})`
-5. Tool returns raw YouTube API response with video results
-6. Coordinator → Response Generator: [Raw API response]
-7. Response Generator creates natural language:
+**Sequential Flow:**
+```
+User Query → SequentialAgent → Agent 1 (api_executor) → Agent 2 (response_generator) → User
+```
+
+1. **SequentialAgent receives** user query: "Find videos about machine learning"
+
+2. **Step 1 - API Executor Agent executes:**
+   - Analyzes query to determine it needs video search
+   - Calls `execute_dynamic_youtube_query(query_type="search", q="machine learning")`
+   - Receives raw YouTube API response with video list
+   - **Stores in `state['api_response']`** via `output_key="api_response"`
+
+3. **Step 2 - Response Generator Agent executes:**
+   - Instruction contains `{api_response}` placeholder
+   - ADK automatically injects `state['api_response']` into the instruction
+   - Analyzes the data and creates natural language response:
    ```
    I found several videos about machine learning. Here are the top results:
 
@@ -167,55 +207,47 @@ Step 6: Coordinator → User: "I found several videos about Python programming..
    2. **'Neural Networks Explained'** by 3Blue1Brown
       - 5.1M views • Posted 3 years ago
       - Visual explanation of neural networks
-   
-   [etc...]
    ```
 
-### Example 2: Channel Statistics
+4. **User receives** the natural language response
+
+### Example 2: Latest Video Views
+
+**User Query:** "How many views does my latest video have?"
+
+**Sequential Flow:**
+
+1. **API Executor Agent:**
+   - Calls `execute_dynamic_youtube_query(query_type="my_videos", max_results=1, order="date", include_statistics=True)`
+   - Stores result: `state['api_response'] = {"items": [{"title": "Tutorial on Python", "statistics": {"viewCount": "1201"}, ...}]}`
+
+2. **Response Generator Agent:**
+   - Reads `{api_response}` from state
+   - Generates response:
+   ```
+   Your most recent video "Tutorial on Python" has 1,201 views.
+   It was published 2 days ago, averaging about 600 views per day!
+   ```
+
+### Example 3: Channel Statistics
 
 **User Query:** "Show me my channel statistics"
 
-**Flow:**
-1. Coordinator → API Executor: "Show me my channel statistics"
-2. API Executor: `execute_youtube_api_call("data", "channels", {})`
-3. Raw response includes subscriber count, total views, video count
-4. Coordinator → Response Generator: [Raw API response]
-5. Response Generator:
-   ```
-   Here's an overview of your channel performance:
+**Sequential Flow:**
 
+1. **API Executor Agent:**
+   - Calls `execute_dynamic_youtube_query(query_type="channel_details")`
+   - Stores: `state['api_response'] = {"subscriberCount": "15234", "videoCount": "156", ...}`
+
+2. **Response Generator Agent:**
+   - Reads from state and generates:
+   ```
    📊 **Channel Statistics**
    - **Subscribers:** 15,234
-   - **Total Views:** 2.4M across all videos
    - **Total Videos:** 156
+   - **Total Views:** 2.4M
 
-   Your channel is growing steadily! Consider maintaining your 
-   current upload schedule and exploring similar content.
-   ```
-
-### Example 3: Top Videos Analytics
-
-**User Query:** "What are my top 5 videos from the last 7 days?"
-
-**Flow:**
-1. Coordinator → API Executor: "What are my top 5 videos from the last 7 days?"
-2. API Executor analyzes:
-   - Intent: Get top performing videos
-   - Endpoint: `analytics/top_videos`
-   - Parameters: `{"days": 7, "limit": 5}`
-3. API Executor: `execute_youtube_api_call("analytics", "top_videos", {"days": 7, "limit": 5})`
-4. Raw analytics response with performance metrics
-5. Coordinator → Response Generator: [Raw analytics data]
-6. Response Generator provides insights:
-   ```
-   Here are your top 5 videos from the last 7 days:
-
-   1. **"Tutorial: Advanced Python Tips"**
-      - 12,500 views
-      - 450 likes, 89 comments
-      - Average view duration: 8:45
-
-   [etc... with insights and recommendations]
+   Your channel is growing steadily!
    ```
 
 ---

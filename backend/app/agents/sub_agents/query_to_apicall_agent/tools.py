@@ -39,13 +39,13 @@ def _get_youtube_clients():
 
 def execute_dynamic_youtube_query(
     query_type: str,
-    metrics: Optional[str] = None,
-    dimensions: Optional[str] = None,
-    filters: Optional[str] = None,
-    sort: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    max_results: int = 100,
+    metrics: Optional[str],
+    dimensions: Optional[str],
+    filters: Optional[str],
+    sort: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str],
+    max_results: Optional[int],
     **additional_params
 ) -> Dict[str, Any]:
     """
@@ -56,13 +56,13 @@ def execute_dynamic_youtube_query(
     
     Args:
         query_type: Type of query - "analytics", "search", "video_details", "channel_details", "my_videos", "playlists", "comments"
-        metrics: Comma-separated metrics for analytics (e.g., "views,likes,comments,shares")
-        dimensions: Comma-separated dimensions for analytics (e.g., "day", "video", "country")
-        filters: Filters for analytics (e.g., "video==VIDEO_ID")
-        sort: Sort order (e.g., "-views" for descending views)
-        start_date: Start date for analytics (YYYY-MM-DD) - defaults to 30 days ago
-        end_date: End date for analytics (YYYY-MM-DD) - defaults to today
-        max_results: Maximum results to return
+        metrics: Comma-separated metrics for analytics (e.g., "views,likes,comments,shares"). Optional, defaults to "views,likes,comments" for analytics.
+        dimensions: Comma-separated dimensions for analytics (e.g., "day", "video", "country"). Optional.
+        filters: Filters for analytics (e.g., "video==VIDEO_ID"). Optional.
+        sort: Sort order (e.g., "-views" for descending views). Optional.
+        start_date: Start date for analytics (YYYY-MM-DD). Optional, defaults to 30 days ago for analytics.
+        end_date: End date for analytics (YYYY-MM-DD). Optional, defaults to today for analytics.
+        max_results: Maximum results to return. Optional, defaults to 100.
         additional_params: Any other parameters specific to the query type
     
     Returns:
@@ -104,6 +104,10 @@ def execute_dynamic_youtube_query(
     """
     try:
         youtube_data, youtube_analytics = _get_youtube_clients()
+        
+        # Handle default values (Google AI doesn't support defaults in function signatures)
+        if max_results is None:
+            max_results = 100
         
         if query_type == "analytics":
             # YouTube Analytics API query
