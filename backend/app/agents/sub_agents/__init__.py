@@ -1,2 +1,2 @@
-from .query_to_apicall_agent.agent import query_to_apicall_agent
-from .response_analyzer_agent.agent import response_analyzer_agent
+from .query_to_apicall_agent.agent import api_executor_agent
+from .response_analyzer_agent.agent import response_generator_agent

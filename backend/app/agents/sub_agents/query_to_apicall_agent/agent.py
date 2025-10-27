@@ -6,11 +6,14 @@ from . import prompt, tools
 AGENT_MODEL = "gemini/gemini-2.0-flash"
 
 # Create the agent instance
-query_to_apicall_agent = Agent(
-    name="query_to_apicall_agent",
+api_executor_agent = Agent(
+    name="api_executor_agent",
     model=LiteLlm(AGENT_MODEL),
-    description="Converts natural language queries into YouTube API calls and executes them",
+    description="Understands user queries about YouTube data and dynamically constructs and executes the appropriate YouTube API calls to fetch any requested information.",
     instruction=prompt.INSTRUCTION,
-    tools=[tools.execute_youtube_api_call],
+    tools=[
+        tools.execute_dynamic_youtube_query,  # Primary tool - handles ANY YouTube query dynamically
+        tools.execute_youtube_api_call,        # Legacy tool - kept for backwards compatibility
+    ],
 )
 

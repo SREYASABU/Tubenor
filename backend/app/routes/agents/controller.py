@@ -7,8 +7,8 @@ from app.utils.logger import get_controller_logger
 from app.database.core import DbSession
 
 from app.agents.main_agent import coordinator_agent
-from app.agents.sub_agents.query_to_apicall_agent.agent import query_to_apicall_agent
-from app.agents.sub_agents.response_analyzer_agent.agent import response_analyzer_agent
+from app.agents.sub_agents.query_to_apicall_agent.agent import api_executor_agent
+from app.agents.sub_agents.response_analyzer_agent.agent import response_generator_agent
 from app.agents.utils import handle_agent_request
 
 
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 
 AGENTS = {
     "coordinator": coordinator_agent,
-    "query_to_apicall": query_to_apicall_agent,
-    "response_analyzer": response_analyzer_agent
+    "api_executor": api_executor_agent,
+    "response_generator": response_generator_agent
 }
 
 @router.get("/list", response_model=List[str])
