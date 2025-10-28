@@ -143,7 +143,7 @@ const Chat = () => {
         <div className="login-container">
           <div className="login-content">
             <h2>Welcome to Tubenor!</h2>
-            <p>Connect your YouTube account to start analyzing your channel data.</p>
+            <p>Chat with your personal YouTube analytics agent</p>
             <LoginButton onLoginSuccess={() => setIsAuthenticated(true)} />
           </div>
         </div>

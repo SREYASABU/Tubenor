@@ -96,6 +96,7 @@ class YouTubeOAuthService:
             access_type='offline',
             include_granted_scopes='true',
             state=state
+            # No prompt parameter - Google will auto-select if user is already logged in
         )
         
         return authorization_url, state

@@ -41,18 +41,14 @@ const OAuthCallback = () => {
         
         console.log('✅ Backend response:', response.data);
 
-        setStatus('success');
-        
         // Store user info
         localStorage.setItem('youtube_authenticated', 'true');
         if (response.data.channel_info) {
           localStorage.setItem('channel_info', JSON.stringify(response.data.channel_info));
         }
 
-        // Redirect to home after 2 seconds
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 2);
+        // Redirect immediately to chat
+        window.location.href = '/';
 
       } catch (err) {
         console.error('❌ OAuth callback error:', err);
