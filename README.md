@@ -1,6 +1,6 @@
 # Tubentor
 
-AI-powered YouTube analytics assistant with natural language chat interface.
+YouTube analytics assistant.
 
 ## Quick Start
 
