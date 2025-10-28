@@ -53,6 +53,103 @@
   font-weight: 400;
 }
 
+.channel-info {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--youtube-bg);
+  border-radius: 20px;
+  font-size: 14px;
+  color: var(--youtube-text-secondary);
+}
+
+.channel-thumbnail {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--youtube-red);
+}
+
+/* Login Container */
+.login-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background: var(--youtube-bg);
+}
+
+.login-content {
+  text-align: center;
+  max-width: 600px;
+}
+
+.login-content h2 {
+  font-size: 36px;
+  color: var(--youtube-text);
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.login-content > p {
+  font-size: 18px;
+  color: var(--youtube-text-secondary);
+  margin-bottom: 32px;
+}
+
+.login-content > button {
+  margin: 0 auto;
+}
+
+.login-features {
+  margin-top: 48px;
+  text-align: left;
+  background: var(--youtube-surface);
+  padding: 32px;
+  border-radius: 12px;
+}
+
+.login-features h3 {
+  color: var(--youtube-text);
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.login-features ul {
+  list-style: none;
+  padding: 0;
+}
+
+.login-features li {
+  color: var(--youtube-text-secondary);
+  font-size: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--youtube-border);
+}
+
+.login-features li:last-child {
+  border-bottom: none;
+}
+
+/* Loading Container */
+.loading-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-container p {
+  color: var(--youtube-text-secondary);
+  font-size: 16px;
+}
+
 /* Messages */
 .chat-messages {
   flex: 1;
@@ -125,6 +222,13 @@
   width: 20px;
   height: 20px;
   color: var(--youtube-text);
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .message-content {

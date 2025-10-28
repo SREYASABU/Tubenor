@@ -1,0 +1,37 @@
+.youtube-login-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--youtube-red);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+}
+
+.youtube-login-button:hover:not(:disabled) {
+  background: var(--youtube-dark-red);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.youtube-login-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 0, 0, 0.3);
+}
+
+.youtube-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.youtube-login-button svg {
+  width: 24px;
+  height: 24px;
+}
+

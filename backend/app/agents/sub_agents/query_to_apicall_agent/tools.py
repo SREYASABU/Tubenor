@@ -46,6 +46,7 @@ def execute_dynamic_youtube_query(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     max_results: Optional[int] = None,
+    user_id: Optional[str] = None,
     **additional_params
 ) -> Dict[str, Any]:
     """
@@ -103,7 +104,7 @@ def execute_dynamic_youtube_query(
         )
     """
     try:
-        youtube_data, youtube_analytics = _get_youtube_clients()
+        youtube_data, youtube_analytics = _get_youtube_clients(user_id)
         
         # Set default for max_results if not provided
         if max_results is None:
