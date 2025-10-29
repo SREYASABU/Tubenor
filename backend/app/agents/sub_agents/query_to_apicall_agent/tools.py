@@ -104,7 +104,7 @@ def execute_dynamic_youtube_query(
         )
     """
     try:
-        youtube_data, youtube_analytics = _get_youtube_clients(user_id)
+        youtube_data, youtube_analytics = _get_youtube_clients()
         
         # Set default for max_results if not provided
         if max_results is None:
@@ -136,6 +136,42 @@ def execute_dynamic_youtube_query(
                 query_params["sort"] = sort
             
             response = youtube_analytics.reports().query(**query_params).execute()
+            
+            # If the response includes video IDs, enrich with video titles
+            if dimensions and "video" in dimensions and "rows" in response:
+                video_ids = []
+                for row in response["rows"]:
+                    # The video ID is typically the first element when 'video' is a dimension
+                    video_id = row[0]
+                    if video_id:
+                        video_ids.append(video_id)
+                
+                # Fetch video details in batch (max 50 at a time)
+                if video_ids:
+                    video_details = {}
+                    # YouTube Data API allows max 50 IDs per request
+                    for i in range(0, len(video_ids), 50):
+                        batch_ids = video_ids[i:i+50]
+                        videos_response = youtube_data.videos().list(
+                            part="snippet,statistics",
+                            id=",".join(batch_ids)
+                        ).execute()
+                        
+                        for video in videos_response.get("items", []):
+                            video_id = video["id"]
+                            video_details[video_id] = {
+                                "title": video["snippet"]["title"],
+                                "description": video["snippet"].get("description", ""),
+                                "publishedAt": video["snippet"].get("publishedAt", ""),
+                                "thumbnails": video["snippet"].get("thumbnails", {}),
+                                "statistics": video.get("statistics", {}),
+                                "embedUrl": f"https://www.youtube.com/embed/{video_id}",
+                                "watchUrl": f"https://www.youtube.com/watch?v={video_id}"
+                            }
+                    
+                    # Add video details to the response
+                    response["videoDetails"] = video_details
+            
             return response
             
         elif query_type == "search":
@@ -189,7 +225,21 @@ def execute_dynamic_youtube_query(
                     part="snippet,statistics,contentDetails",
                     id=",".join(video_ids)
                 ).execute()
+                
+                # Add embed URLs to each video
+                for video in videos_response.get("items", []):
+                    video_id = video["id"]
+                    video["embedUrl"] = f"https://www.youtube.com/embed/{video_id}"
+                    video["watchUrl"] = f"https://www.youtube.com/watch?v={video_id}"
+                
                 return videos_response
+            
+            # Add embed URLs even if statistics not requested
+            for item in response.get("items", []):
+                if "videoId" in item.get("id", {}):
+                    video_id = item["id"]["videoId"]
+                    item["embedUrl"] = f"https://www.youtube.com/embed/{video_id}"
+                    item["watchUrl"] = f"https://www.youtube.com/watch?v={video_id}"
             
             return response
             
